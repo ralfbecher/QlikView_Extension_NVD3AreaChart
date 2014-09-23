@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ExtensionObject Path="NVD3AreaChart" 
+                 Label="NV D3 Area Chart" 
+				 Description="D3 Area Chart Example" 
+ 				 PageWidth="3"
+				 PageHeight="2000"
+				 Type="Object" >
+	<Dimension Label="Key" Initial="YourDimensionField" TargetName="Key" OtherCounted="6" />
+	<Dimension Label="x-Axis" Initial="=Num(YourDateField)" TargetName="x-Axis" />
+	<Measurement Label="y-Axis" Initial="=Sum(YourMeasure)" TargetName="y-Axis" />
+    <Text Label="Show Others" Type="checkbox" Expression="1" />
+	<Initiate Name="Caption.Text" value="NV D3 Area Chart" />
+</ExtensionObject>
