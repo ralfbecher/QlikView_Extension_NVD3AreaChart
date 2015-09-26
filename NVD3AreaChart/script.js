@@ -126,7 +126,7 @@ if(!window.console){ window.console = {log: function(){} }; }
 		});
 		
 		function convertToUnixTime(_text) {
-			return (parseInt(_text)  - 25569)*86400*1000;
+			return dateFromQlikNumber(parseInt(_text)).getTime();
 		}
 		
 		function findDate(_date, _arr, _offset) {
@@ -163,3 +163,10 @@ if(!window.console){ window.console = {log: function(){} }; }
 		}
 
 })(jQuery);
+
+function dateFromQlikNumber(n) {
+	var d = new Date((n - 25569)*86400*1000);
+	// since date was created in UTC shift it to the local timezone
+	d.setTime( d.getTime() + d.getTimezoneOffset()*60*1000 );
+	return d;
+}
