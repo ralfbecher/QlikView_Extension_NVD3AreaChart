@@ -28,9 +28,11 @@ if(!window.console){ window.console = {log: function(){} }; }
 			Qv.AddExtension(_extension,			
 				function () {
 				
-					var yAxisFormat = this.Layout.Text0.text.toString();
+					var xAxisFormat = this.Layout.Text0.text.toString();
+					xAxisFormat = (xAxisFormat == '' ? '%x' : xAxisFormat);
+					var yAxisFormat = this.Layout.Text1.text.toString();
 					yAxisFormat = (yAxisFormat == '' ? ',.2f' : yAxisFormat);
-					var showOthers = ((this.Layout.Text1.text.toString() * 1) > 0);
+					var showOthers = ((this.Layout.Text2.text.toString() * 1) > 0);
 					
 					// need a unique id to render chart
 					var objId = this.Layout.ObjectId.replace("\\", "_"); // chart name in CSS class (eg "QvFrame Document_CH01")
@@ -86,21 +88,21 @@ if(!window.console){ window.console = {log: function(){} }; }
 						var chart;
 						nv.addGraph(function() {
 						  chart = nv.models.stackedAreaChart()
+								.margin({right: 40})
 								.x(function(d) { return d[0] })
 								.y(function(d) { return d[1] })
 								.useInteractiveGuideline(true)
 								.color(keyColor)
 								.showControls(true)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
-								// .transitionDuration(0);
 							  // .clipEdge(true)
 							  // .pointActive(function(d) { return d.notActive })
 							  // .interpolate('cardinal-open')
 							  .style('stream')
 							  .showLegend(true)
-								.transitionDuration(0);
+							  .transitionDuration(0);
 
 						  chart.xAxis
-							  .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+							  .tickFormat(function(d) { return d3.time.format(xAxisFormat)(new Date(d)) });
 
 						  chart.yAxis
 							  .tickFormat(d3.format(yAxisFormat));

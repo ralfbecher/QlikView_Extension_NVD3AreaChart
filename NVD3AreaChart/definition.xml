@@ -8,7 +8,8 @@
 	<Dimension Label="Key" Initial="" TargetName="Key" OtherCounted="6" />
 	<Dimension Label="x-Axis" Initial="" TargetName="x-Axis" />
 	<Measurement Label="y-Axis" Initial="" TargetName="y-Axis" />
-    <Text Label="y-Axis d3 format" Type="text" Expression="" />
+    <Text Label="x-Axis d3 format (date)" Type="text" Expression="" />
+    <Text Label="y-Axis d3 format (number)" Type="text" Expression="" />
     <Text Label="Show Others" Type="checkbox" Expression="1" />
 	<Initiate Name="Caption.Text" value="NV D3 Area Chart" />
     <Initiate Name="Chart.Dimension.0.Field" Value="YourDimensionField" />
