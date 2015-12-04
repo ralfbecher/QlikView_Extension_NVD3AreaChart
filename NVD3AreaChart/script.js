@@ -22,117 +22,112 @@ if(!window.console){ window.console = {log: function(){} }; }
 
 	// load all libraries as array, don't use nested Qva.LoadScript() calls
 	Qv.LoadExtensionScripts([_path + 'js/d3.min.js', _path + 'js/nv.d3.min.js', _path + 'js/interactiveLayer.js', _path + 'js/utils.js'], 
-	// Qv.LoadExtensionScripts([_path + 'js/require.js'], 
 		function () {
-			// require([_path + 'js/d3.v3.js'],
-				// function () {
-					// Qv.LoadExtensionScripts([_path + 'js/nv.d3.min.js', _path + 'js/interactiveLayer.js', _path + 'js/utils.js'], 
-						// function () {
-						Qv.AddExtension(_extension,			
-							function () {
-								Qva.LoadCSS(_path + 'css/nv.d3.min.css');
+			// load css file
+			Qva.LoadCSS(_path + 'css/nv.d3.min.css');
+			Qv.AddExtension(_extension,			
+				function () {
+				
+					var yAxisFormat = this.Layout.Text0.text.toString();
+					yAxisFormat = (yAxisFormat == '' ? ',.2f' : yAxisFormat);
+					var showOthers = ((this.Layout.Text1.text.toString() * 1) > 0);
+					
+					// need a unique id to render chart
+					var objId = this.Layout.ObjectId.replace("\\", "_"); // chart name in CSS class (eg "QvFrame Document_CH01")
+
+					//console.log(objId);
+					if (this.Data.Rows.length > 0) {
+						var myDiv = $('<div />').css({
+										overflow: 'hidden',
+										height: this.GetHeight(),
+										width: this.GetWidth()
+									}).attr({
+										id: objId
+									}).appendTo($(this.Element).empty());
+
+
+						// $(document.createElementNS('http://www.w3.org/2000/svg','svg')).css({
+										// height: this.GetHeight(),
+										// width: this.GetWidth()}).appendTo(myDiv);
+						
+						// sizing problem in browser
+						d3.select('#'+objId).append('svg');
+						
+						// get key elements in QlikView order
+						var listKey = [],
+							dateKey = [],
+							dateVal = 0;
+						$.each(this.Data.Rows, function( index, row ) {
+							if ($.inArray(row[0].text, listKey) === -1) {
+								if (showOthers || row[0].text !== "Others")
+									listKey.push(row[0].text);
+							}
+							dateVal = convertToUnixTime(row[1].text);
+							if ($.inArray(dateVal, dateKey) === -1) {
+								dateKey.push(dateVal);
+							}
+
+						});
+						// Transform data set
+						var data = d3.nest()
+									.key(function(d) { return d.key; }).sortKeys(function(a,b) { return listKey.indexOf(a) - listKey.indexOf(b); })
+									.entries(this.Data.Rows.filter(function(row){ return (showOthers || row[0].text !== "Others"); }).map(function(row){
+										return {"key" : row[0].text, "x" : convertToUnixTime(row[1].text), "y" : parseFloat(row[2].data)}
+									}))
+									.map(function(k){
+										return {"key": k.key, "values": k.values.map(function(v){return [v.x,v.y]})}
+									});
+						// need values for all dates for all keys
+						data = assignDefaultValues(dateKey, data, 0);
+						
+						var colors = d3.scale.category20();
+						keyColor = function(d, i) {return colors(d.key)};
+
+						var chart;
+						nv.addGraph(function() {
+						  chart = nv.models.stackedAreaChart()
+								.x(function(d) { return d[0] })
+								.y(function(d) { return d[1] })
+								.useInteractiveGuideline(true)
+								.color(keyColor)
+								.showControls(true)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
+								// .transitionDuration(0);
+							  // .clipEdge(true)
+							  // .pointActive(function(d) { return d.notActive })
+							  // .interpolate('cardinal-open')
+							  .style('stream')
+							  .showLegend(true)
+								.transitionDuration(0);
+
+						  chart.xAxis
+							  .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+
+						  chart.yAxis
+							  .tickFormat(d3.format(yAxisFormat));
 							
-								var showOthers = ((this.Layout.Text0.text.toString() * 1) > 0);
-								// load css file
-								
-								// need a unique id to render chart
-								var objId = this.Layout.ObjectId.replace("\\", "_"); // chart name in CSS class (eg "QvFrame Document_CH01")
+						  //chart.legend.vers('furious');
 
-								//console.log(objId);
-								if (this.Data.Rows.length > 0) {
-									var myDiv = $('<div />').css({
-													overflow: 'hidden',
-													height: this.GetHeight(),
-													width: this.GetWidth()
-												}).attr({
-													id: objId
-												}).appendTo($(this.Element).empty());
+						  d3.select('#'+objId+' svg')
+							.datum(data)
+							.transition().duration(0)
+							.call(chart)
+							.each('start', function() {
+								setTimeout(function() {
+									d3.selectAll('#'+objId+' svg *').each(function() {
+									  if(this.__transition__)
+										this.__transition__.duration = 1;
+									})
+								  }, 0)
+							  });
 
-
-									// $(document.createElementNS('http://www.w3.org/2000/svg','svg')).css({
-													// height: this.GetHeight(),
-													// width: this.GetWidth()}).appendTo(myDiv);
-									
-									// sizing problem in browser
-									d3.select('#'+objId).append('svg');
-									
-									// get key elements in QlikView order
-									var listKey = [],
-										dateKey = [],
-										dateVal = 0;
-									$.each(this.Data.Rows, function( index, row ) {
-										if ($.inArray(row[0].text, listKey) === -1) {
-											if (showOthers || row[0].text !== "Others")
-												listKey.push(row[0].text);
-										}
-										dateVal = convertToUnixTime(row[1].text);
-										if ($.inArray(dateVal, dateKey) === -1) {
-											dateKey.push(dateVal);
-										}
-
-									});
-									// Transform data set
-									var data = d3.nest()
-												.key(function(d) { return d.key; }).sortKeys(function(a,b) { return listKey.indexOf(a) - listKey.indexOf(b); })
-												.entries(this.Data.Rows.filter(function(row){ return (showOthers || row[0].text !== "Others"); }).map(function(row){
-													return {"key" : row[0].text, "x" : convertToUnixTime(row[1].text), "y" : parseFloat(row[2].data)}
-												}))
-												.map(function(k){
-													return {"key": k.key, "values": k.values.map(function(v){return [v.x,v.y]})}
-												});
-									// need values for all dates for all keys
-									data = assignDefaultValues(dateKey, data, 0);
-									
-									var colors = d3.scale.category20();
-									keyColor = function(d, i) {return colors(d.key)};
-
-									var chart;
-									nv.addGraph(function() {
-									  chart = nv.models.stackedAreaChart()
-											.x(function(d) { return d[0] })
-											.y(function(d) { return d[1] })
-											.useInteractiveGuideline(true)
-											.color(keyColor)
-											.showControls(true)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
-											// .transitionDuration(0);
-										  // .clipEdge(true)
-										  // .pointActive(function(d) { return d.notActive })
-										  // .interpolate('cardinal-open')
-										  .style('stream')
-										  .showLegend(true)
-											.transitionDuration(0);
-
-									  chart.xAxis
-										  .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
-
-									  chart.yAxis
-										  .tickFormat(d3.format(',.2f'));
-										
-									  //chart.legend.vers('furious');
-
-									  d3.select('#'+objId+' svg')
-										.datum(data)
-										.transition().duration(0)
-										.call(chart)
-										.each('start', function() {
-											setTimeout(function() {
-												d3.selectAll('#'+objId+' svg *').each(function() {
-												  if(this.__transition__)
-													this.__transition__.duration = 1;
-												})
-											  }, 0)
-										  });
-
-									  // nv.utils.windowResize(chart.update);
-									  return chart;
-									});
-									
-								} else {
-									this.Element.html('<p align="center"><b>No resulting rows to display..</b></p>');
-								}
-								
-							// });
-						// });
+						  // nv.utils.windowResize(chart.update);
+						  return chart;
+						});
+						
+					} else {
+						this.Element.html('<p align="center"><b>No resulting rows to display..</b></p>');
+					}
+					
 			});
 		});
 		
