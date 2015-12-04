@@ -21,17 +21,19 @@ if(!window.console){ window.console = {log: function(){} }; }
 	var _path = (_webview ? _pathShort : _pathLong);
 
 	// load all libraries as array, don't use nested Qva.LoadScript() calls
-	Qv.LoadExtensionScripts([_path + 'js/require.js'], 
+	Qv.LoadExtensionScripts([_path + 'js/d3.min.js', _path + 'js/nv.d3.min.js', _path + 'js/interactiveLayer.js', _path + 'js/utils.js'], 
+	// Qv.LoadExtensionScripts([_path + 'js/require.js'], 
 		function () {
-			require([_path + 'js/d3.v3.js'],
-				function () {
-					Qv.LoadExtensionScripts([_path + 'js/nv.d3.min.js', _path + 'js/interactiveLayer.js', _path + 'js/utils.j'], 
-						function () {
+			// require([_path + 'js/d3.v3.js'],
+				// function () {
+					// Qv.LoadExtensionScripts([_path + 'js/nv.d3.min.js', _path + 'js/interactiveLayer.js', _path + 'js/utils.js'], 
+						// function () {
 						Qv.AddExtension(_extension,			
 							function () {
+								Qva.LoadCSS(_path + 'css/nv.d3.min.css');
+							
 								var showOthers = ((this.Layout.Text0.text.toString() * 1) > 0);
 								// load css file
-								Qva.LoadCSS(_path + 'css/nv.d3.min.css');
 								
 								// need a unique id to render chart
 								var objId = this.Layout.ObjectId.replace("\\", "_"); // chart name in CSS class (eg "QvFrame Document_CH01")
@@ -87,17 +89,26 @@ if(!window.console){ window.console = {log: function(){} }; }
 									var chart;
 									nv.addGraph(function() {
 									  chart = nv.models.stackedAreaChart()
-													.useInteractiveGuideline(true)
-													.x(function(d) { return d[0] })
-													.y(function(d) { return d[1] })
-													.color(keyColor)
-													.transitionDuration(0);
+											.x(function(d) { return d[0] })
+											.y(function(d) { return d[1] })
+											.useInteractiveGuideline(true)
+											.color(keyColor)
+											.showControls(true)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
+											// .transitionDuration(0);
+										  // .clipEdge(true)
+										  // .pointActive(function(d) { return d.notActive })
+										  // .interpolate('cardinal-open')
+										  .style('stream')
+										  .showLegend(true)
+											.transitionDuration(0);
 
 									  chart.xAxis
 										  .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
 
 									  chart.yAxis
 										  .tickFormat(d3.format(',.2f'));
+										
+									  //chart.legend.vers('furious');
 
 									  d3.select('#'+objId+' svg')
 										.datum(data)
@@ -112,7 +123,7 @@ if(!window.console){ window.console = {log: function(){} }; }
 											  }, 0)
 										  });
 
-									  nv.utils.windowResize(chart.update);
+									  // nv.utils.windowResize(chart.update);
 									  return chart;
 									});
 									
@@ -120,8 +131,8 @@ if(!window.console){ window.console = {log: function(){} }; }
 									this.Element.html('<p align="center"><b>No resulting rows to display..</b></p>');
 								}
 								
-							});
-						});
+							// });
+						// });
 			});
 		});
 		
